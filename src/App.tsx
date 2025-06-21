@@ -1,73 +1,78 @@
 import React, { useState } from 'react';
-import Navbar from './components/Navbar';
-import HomePage from './components/HomePage';
-import AuthModal from './components/AuthModal';
-import Dashboard from './components/Dashboard';
-import JobBrowser from './components/JobBrowser';
-import JobPostForm from './components/JobPostForm';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from './hooks/useAuth';
+import Navbar from './components/layout/Navbar';
+import HomePage from './components/pages/HomePage';
+import SocialFeed from './components/pages/SocialFeed';
+import AuthModal from './components/auth/AuthModal';
+import FloatingElements from './components/ui/FloatingElements';
 
 function App() {
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const { user, isAuthenticated, loading } = useAuth();
   const [currentView, setCurrentView] = useState('home');
   const [authModal, setAuthModal] = useState<{ isOpen: boolean; mode: 'login' | 'register' }>({
     isOpen: false,
     mode: 'login'
   });
 
-  const handleLogin = (user: any) => {
-    setCurrentUser(user);
-    setCurrentView('dashboard');
-    setAuthModal({ isOpen: false, mode: 'login' });
-  };
-
-  const handleLogout = () => {
-    setCurrentUser(null);
-    setCurrentView('home');
-  };
-
-  const handleApplyJob = (jobId: string) => {
-    // Mock application logic
-    alert('Application submitted successfully! You will be notified when the company reviews your application.');
-  };
-
-  const handleJobPosted = () => {
-    alert('Job posted successfully! Students can now see and apply for your job.');
-    setCurrentView('dashboard');
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 flex items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full"
+        />
+      </div>
+    );
+  }
 
   const renderCurrentView = () => {
-    if (!currentUser) {
+    if (!isAuthenticated && currentView !== 'home') {
+      setCurrentView('home');
       return <HomePage onRegisterClick={() => setAuthModal({ isOpen: true, mode: 'register' })} />;
     }
 
     switch (currentView) {
-      case 'dashboard':
-        return <Dashboard currentUser={currentUser} onViewChange={setCurrentView} />;
+      case 'home':
+        return <HomePage onRegisterClick={() => setAuthModal({ isOpen: true, mode: 'register' })} />;
+      case 'feed':
+        return <SocialFeed />;
       case 'jobs':
-        return <JobBrowser currentUser={currentUser} onApplyJob={handleApplyJob} />;
-      case 'post-job':
-        return <JobPostForm currentUser={currentUser} onJobPosted={handleJobPosted} />;
+        return <SocialFeed />; // For now, using the same component
+      case 'profile':
+        return <SocialFeed />; // For now, using the same component
       default:
         return <HomePage onRegisterClick={() => setAuthModal({ isOpen: true, mode: 'register' })} />;
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 relative">
+      <FloatingElements />
+      
       <Navbar
-        currentUser={currentUser}
         onLoginClick={() => setAuthModal({ isOpen: true, mode: 'login' })}
         onRegisterClick={() => setAuthModal({ isOpen: true, mode: 'register' })}
         currentView={currentView}
         onViewChange={setCurrentView}
       />
       
-      {renderCurrentView()}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentView}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.3 }}
+        >
+          {renderCurrentView()}
+        </motion.div>
+      </AnimatePresence>
 
       <AuthModal
         isOpen={authModal.isOpen}
         onClose={() => setAuthModal({ ...authModal, isOpen: false })}
-        onLogin={handleLogin}
         initialMode={authModal.mode}
       />
     </div>
