@@ -5,7 +5,7 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBfgUFTXX6UgsInUi7nuPS6G4KpRl476RQ",
+  apiKey: "AIzaSyCDp35K5GjZAMPNWlvO_C3ofghfBLYoHe8",
   authDomain: "count-connect.firebaseapp.com",
   projectId: "count-connect",
   storageBucket: "count-connect.firebasestorage.app",
