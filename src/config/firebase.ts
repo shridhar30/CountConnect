@@ -1,27 +1,19 @@
-import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
+
+// src/config/firebase.ts
+import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "demo-api-key",
-  authDomain: "countconnect-demo.firebaseapp.com",
-  projectId: "countconnect-demo",
-  storageBucket: "countconnect-demo.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abcdef123456"
+  apiKey: "AIzaSyBfgUFTXX6UgsInUi7nuPS6G4KpRl476RQ",
+  authDomain: "count-connect.firebaseapp.com",
+  projectId: "count-connect",
+  storageBucket: "count-connect.firebasestorage.app",
+  messagingSenderId: "454765278480",
+  appId: "1:454765278480:web:a635874b3ae166a7122195",
+  measurementId: "G-0VLF8YGLD1"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-
-// Initialize Firebase Authentication and get a reference to the service
 export const auth = getAuth(app);
-
-// Initialize Cloud Firestore and get a reference to the service
 export const db = getFirestore(app);
-
-// Initialize Cloud Storage and get a reference to the service
-export const storage = getStorage(app);
-
-export default app;
