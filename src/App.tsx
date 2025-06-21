@@ -4,6 +4,7 @@ import { useAuth } from './hooks/useAuth';
 import Navbar from './components/layout/Navbar';
 import HomePage from './components/pages/HomePage';
 import SocialFeed from './components/pages/SocialFeed';
+import ProfilePage from './components/pages/ProfilePage';
 import AuthModal from './components/auth/AuthModal';
 import FloatingElements from './components/ui/FloatingElements';
 
@@ -41,7 +42,7 @@ function App() {
       case 'jobs':
         return <SocialFeed />; // For now, using the same component
       case 'profile':
-        return <SocialFeed />; // For now, using the same component
+        return <ProfilePage />;
       default:
         return <HomePage onRegisterClick={() => setAuthModal({ isOpen: true, mode: 'register' })} />;
     }

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Mail, Lock, User, Building, GraduationCap, Phone, Upload, QrCode, CheckCircle } from 'lucide-react';
+import { X, Mail, Lock, User, Building, GraduationCap, Phone, Upload, QrCode, CheckCircle, AlertCircle } from 'lucide-react';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../../config/firebase';
 import GlassCard from '../ui/GlassCard';
@@ -14,6 +14,7 @@ interface AuthModalProps {
 const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'login' }) => {
   const [mode, setMode] = useState<'login' | 'register' | 'register-student' | 'register-company' | 'payment'>(initialMode);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string>('');
   const [paymentScreenshot, setPaymentScreenshot] = useState<File | null>(null);
   const [formData, setFormData] = useState({
     email: '',
@@ -32,13 +33,30 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
     
     try {
       await signInWithEmailAndPassword(auth, formData.email, formData.password);
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error:', error);
-      alert('Login failed. Please check your credentials.');
+      
+      // Handle specific Firebase auth errors
+      let errorMessage = 'Login failed. Please try again.';
+      
+      if (error.code === 'auth/invalid-credential') {
+        errorMessage = 'Invalid email or password. Please check your credentials and try again.';
+      } else if (error.code === 'auth/user-not-found') {
+        errorMessage = 'No account found with this email. Please register first.';
+      } else if (error.code === 'auth/wrong-password') {
+        errorMessage = 'Incorrect password. Please try again.';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Please enter a valid email address.';
+      } else if (error.code === 'auth/too-many-requests') {
+        errorMessage = 'Too many failed attempts. Please try again later.';
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -47,13 +65,26 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
     
     try {
       await createUserWithEmailAndPassword(auth, formData.email, formData.password);
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Registration error:', error);
-      alert('Registration failed. Please try again.');
+      
+      // Handle specific Firebase auth errors
+      let errorMessage = 'Registration failed. Please try again.';
+      
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = 'An account with this email already exists. Please sign in instead.';
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = 'Password is too weak. Please use at least 6 characters.';
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Please enter a valid email address.';
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -73,6 +104,17 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
       onSubmit={handleLogin}
       className="space-y-6"
     >
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl flex items-center space-x-3"
+        >
+          <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0" />
+          <p className="text-red-400 text-sm">{error}</p>
+        </motion.div>
+      )}
+
       <div>
         <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
         <div className="relative">
@@ -103,11 +145,9 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
         </div>
       </div>
 
-      <div className="text-sm text-gray-400 bg-blue-500/10 border border-blue-500/20 p-4 rounded-xl">
-        <strong className="text-blue-400">Demo Accounts:</strong><br />
-        Student: student@demo.com<br />
-        Company: company@demo.com<br />
-        Password: demo123
+      <div className="text-sm text-amber-400 bg-amber-500/10 border border-amber-500/20 p-4 rounded-xl">
+        <strong className="text-amber-300">Note:</strong><br />
+        To test the application, please create a new account using the registration form, or contact the administrator to set up demo accounts in Firebase Authentication.
       </div>
       
       <motion.button
@@ -123,7 +163,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
       <div className="text-center">
         <button
           type="button"
-          onClick={() => setMode('register')}
+          onClick={() => {
+            setMode('register');
+            setError('');
+          }}
           className="text-blue-400 hover:text-blue-300 text-sm transition-colors"
         >
           Don't have an account? Sign up
@@ -138,10 +181,24 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
     >
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl flex items-center space-x-3"
+        >
+          <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0" />
+          <p className="text-red-400 text-sm">{error}</p>
+        </motion.div>
+      )}
+
       <p className="text-gray-300 text-center mb-8">Choose your account type to get started</p>
       
       <motion.button
-        onClick={() => setMode('register-student')}
+        onClick={() => {
+          setMode('register-student');
+          setError('');
+        }}
         className="w-full p-6 border border-white/10 hover:border-blue-500/50 rounded-2xl transition-all duration-300 group bg-white/5 hover:bg-white/10"
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
@@ -158,7 +215,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
       </motion.button>
       
       <motion.button
-        onClick={() => setMode('register-company')}
+        onClick={() => {
+          setMode('register-company');
+          setError('');
+        }}
         className="w-full p-6 border border-white/10 hover:border-green-500/50 rounded-2xl transition-all duration-300 group bg-white/5 hover:bg-white/10"
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
@@ -177,7 +237,10 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
       <div className="text-center">
         <button
           type="button"
-          onClick={() => setMode('login')}
+          onClick={() => {
+            setMode('login');
+            setError('');
+          }}
           className="text-blue-400 hover:text-blue-300 text-sm transition-colors"
         >
           Already have an account? Sign in
@@ -192,6 +255,17 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
     >
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl flex items-center space-x-3"
+        >
+          <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0" />
+          <p className="text-red-400 text-sm">{error}</p>
+        </motion.div>
+      )}
+
       <div className="text-center mb-8">
         <div className="bg-green-500/20 p-4 rounded-2xl w-fit mx-auto mb-4">
           <QrCode className="h-12 w-12 text-green-400" />
@@ -256,9 +330,21 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
       onSubmit={(e) => {
         e.preventDefault();
         setMode('payment');
+        setError('');
       }}
       className="space-y-4"
     >
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl flex items-center space-x-3"
+        >
+          <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0" />
+          <p className="text-red-400 text-sm">{error}</p>
+        </motion.div>
+      )}
+
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-1">Full Name</label>
@@ -350,9 +436,21 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMode = 'l
       onSubmit={(e) => {
         e.preventDefault();
         setMode('payment');
+        setError('');
       }}
       className="space-y-4"
     >
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl flex items-center space-x-3"
+        >
+          <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0" />
+          <p className="text-red-400 text-sm">{error}</p>
+        </motion.div>
+      )}
+
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-300 mb-1">Contact Person</label>
